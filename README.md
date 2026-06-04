@@ -1,3 +1,4 @@
+```
 Project Information
 
 Project Name: Proposal Tracker
@@ -57,3 +58,4 @@ Proposal-Tracker/
         │   └── api.ts              Typed functions for calling the Flask backend
         └── types/
             └── index.ts            Shared TypeScript types (Submission, Proposal, User, etc.)
+```
