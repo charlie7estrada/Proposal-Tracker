@@ -1,0 +1,28 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# === Frontend (Next.js / Node) ===
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.env*.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# === Backend (Python / Flask) ===
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.py[cod]
+backend/.venv/
+backend/venv/
+backend/env/
+backend/.pytest_cache/
+backend/.coverage
+backend/instance/
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
