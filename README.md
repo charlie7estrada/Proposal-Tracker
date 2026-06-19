@@ -32,7 +32,7 @@ Proposal-Tracker/
 │       └── services/               Business logic (PDF generation, email, etc.)
 │
 └── frontend/                       
-    ├── next.config.js              Next.js configuration
+    ├── next.config.ts              Next.js configuration
     ├── tsconfig.json               TypeScript configuration
     ├── package.json                JS dependencies
     ├── .env.example                Environment variable template (copy to .env.local)
@@ -40,7 +40,8 @@ Proposal-Tracker/
     └── src/
         ├── middleware.ts           Intercepts requests — enforces auth on protected routes
         ├── app/                    All pages live here (Next.js App Router)
-        │   ├── layout.tsx          **Main Frame** ROOT LAYOUT — wraps every page (global styles, fonts)
+        │   ├── globals.css         Global styles and Tailwind base imports — edit here for app-wide CSS
+        │   ├── layout.tsx          ROOT LAYOUT — wraps every page (global styles, fonts)
         │   ├── page.tsx            Public intake form (home page, no login required)
         │   ├── login/
         │   │   └── page.tsx        Login page
