@@ -2,31 +2,52 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { UserIcon } from '@/components/icons';
+import { login } from '@/lib/api';
 
-// Sign-in page for returning users, reached from the "Sign in" link on
-// the dashboard. Styled to match the proposal request cards.
+// Sign-in page for returning clients, reached from the "Sign in" link on
+// the home page. Styled to match the proposal request cards.
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
+  const router = useRouter();
+
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const [usernameError, setUsernameError] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [formError, setFormError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Placeholder until backend auth exists: validates the fields but doesn't
-  // sign anyone in yet.
-  function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    setUsernameError('');
+    setEmailError('');
     setPasswordError('');
+    setFormError('');
 
-    if (username.trim() === '') {
-      setUsernameError('Username is required.');
+    let hasErrors = false;
+
+    if (email.trim() === '') {
+      setEmailError('Email is required.');
+      hasErrors = true;
     }
 
     if (password === '') {
       setPasswordError('Password is required.');
+      hasErrors = true;
+    }
+
+    if (hasErrors) return;
+
+    setIsSubmitting(true);
+    try {
+      await login(email.trim(), password);
+      router.push('/dashboard');
+    } catch {
+      setFormError('Incorrect email or password.');
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -48,16 +69,16 @@ export default function LoginPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-black text-sm mb-1">
-                Username <span className="text-red-300">*</span>
+                Email <span className="text-red-300">*</span>
               </label>
               <input
-                type="text"
-                placeholder="Username"
+                type="email"
+                placeholder="Email"
                 className="w-full rounded-md px-3 py-2 bg-white text-gray-700"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
-              {usernameError && <p className="text-red-200 text-xs mt-1">{usernameError}</p>}
+              {emailError && <p className="text-red-200 text-xs mt-1">{emailError}</p>}
             </div>
 
             <div>
@@ -75,11 +96,14 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {formError && <p className="text-red-200 text-sm mt-4">{formError}</p>}
+
           <button
             type="submit"
-            className="w-full bg-blue-950 text-white font-semibold py-3 rounded-md mt-6"
+            disabled={isSubmitting}
+            className="w-full bg-blue-950 text-white font-semibold py-3 rounded-md mt-6 disabled:opacity-50"
           >
-            Sign In
+            {isSubmitting ? 'Signing In...' : 'Sign In'}
           </button>
 
           <p className="text-black text-xs text-center mt-4">
