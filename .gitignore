@@ -23,6 +23,7 @@ backend/env/
 backend/.pytest_cache/
 backend/.coverage
 backend/instance/
+backend/uploads/
 backend/*.db
 backend/*.sqlite
 backend/*.sqlite3
