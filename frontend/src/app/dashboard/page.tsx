@@ -1,86 +1,123 @@
 'use client';
 
-import { useState } from 'react';
-import ProposalIntro from '@/components/ProposalIntro';
-import ProposalDetailsForm from '@/components/ProposalDetailsForm';
-import CreateAccountForm from '@/components/CreateAccountForm';
-import ProposalSentModal from '@/components/ProposalSentModal';
-import type { ProposalDetails, AccountDetails } from '@/types';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import MyDetailsCard from '@/components/MyDetailsCard';
+import ProposalCard from '@/components/ProposalCard';
+import { ApiError, getMe, getProposals } from '@/lib/api';
+import type { ClientProfile, Proposal, ProposalStatus } from '@/types';
 
-// Swap this out for a real fetch() call once the Flask backend exists.
-// The real version will look roughly like:
-//
-//   async function submitToBackend(data: object): Promise<void> {
-//     const response = await fetch('http://localhost:5000/api/submissions', {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify(data),
-//     });
-//     if (!response.ok) throw new Error('Server error');
-//   }
-//
-function fakeSubmit(data: object): Promise<void> {
-  void data;
-  return new Promise((resolve) => {
-    setTimeout(resolve, 1500);
-  });
-}
+const TABS: { label: string; status: ProposalStatus }[] = [
+  { label: 'Active', status: 'active' },
+  { label: 'Completed', status: 'completed' },
+  { label: 'Declined', status: 'declined' },
+];
 
+// The client portal: each client's view of their own proposals, loaded from
+// the backend for whoever is signed in. Unauthenticated visitors are bounced
+// to the sign-in page.
 export default function DashboardPage() {
-  // Which step of the flow is showing: the project form, the create-account
-  // card, or the "sent" confirmation popup
-  const [step, setStep] = useState<'details' | 'account' | 'sent'>('details');
-  const [details, setDetails] = useState<ProposalDetails | null>(null);
+  const router = useRouter();
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(false);
+  const [client, setClient] = useState<ClientProfile | null>(null);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [tab, setTab] = useState<ProposalStatus>('active');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  function handleNext(values: ProposalDetails) {
-    setDetails(values);
-    setStep('account');
-  }
+  useEffect(() => {
+    let active = true;
 
-  async function handleSubmit(account: AccountDetails) {
-    setSubmitError(false);
-    setIsSubmitting(true);
-
-    try {
-      await fakeSubmit({ ...details, ...account });
-      setStep('sent');
-    } catch {
-      setSubmitError(true);
-    } finally {
-      setIsSubmitting(false);
+    async function load() {
+      try {
+        const [me, list] = await Promise.all([getMe(), getProposals()]);
+        if (!active) return;
+        setClient(me);
+        setProposals(list);
+      } catch (err) {
+        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+          router.replace('/login');
+          return;
+        }
+        if (active) setError('Could not load your dashboard. Please try again.');
+      } finally {
+        if (active) setLoading(false);
+      }
     }
+
+    load();
+    return () => {
+      active = false;
+    };
+  }, [router]);
+
+  if (loading) {
+    return <p className="max-w-6xl mx-auto px-6 py-16 text-gray-600">Loading your portal...</p>;
   }
+
+  if (error) {
+    return <p className="max-w-6xl mx-auto px-6 py-16 text-red-600">{error}</p>;
+  }
+
+  const visible = proposals.filter((p) => p.status === tab);
 
   return (
-    <div className="h-full bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        <p className="text-sm text-black">New Proposal Request</p>
+    <div className="min-h-full bg-gray-100">
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mt-2">
-
-          <ProposalIntro />
-
-          {/* Right column: the form card */}
-          <section className="bg-blue-500 rounded-2xl p-8">
-            {step === 'details' ? (
-              <ProposalDetailsForm onNext={handleNext} />
-            ) : (
-              <CreateAccountForm
-                onSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
-                submitError={submitError}
-              />
-            )}
-          </section>
-
+      {/* Hero banner */}
+      <div className="bg-blue-950">
+        <div className="max-w-6xl mx-auto px-6 py-8 flex items-end justify-between gap-6">
+          <div>
+            <h1 className="text-4xl font-bold text-white">My Proposals</h1>
+            <p className="text-blue-100 mt-1">
+              Welcome back {client?.firstName} {client?.lastName}!
+            </p>
+          </div>
+          <span className="text-2xl font-bold text-white">Client Portal</span>
         </div>
       </div>
 
-      {/* Success popup */}
-      <ProposalSentModal open={step === 'sent'} />
+      {/* Status tabs */}
+      <div className="bg-gray-200 border-b border-gray-300">
+        <div className="max-w-6xl mx-auto px-6 flex">
+          {TABS.map((t) => (
+            <button
+              key={t.status}
+              type="button"
+              onClick={() => setTab(t.status)}
+              className={
+                tab === t.status
+                  ? 'bg-blue-600 text-white font-bold px-8 py-3'
+                  : 'text-black font-bold px-8 py-3 hover:text-blue-600'
+              }
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Proposals on the left, client details on the right */}
+      <div className="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <div className="lg:col-span-2 space-y-6">
+          {visible.length === 0 ? (
+            <p className="text-gray-600 bg-gray-50 rounded-2xl p-8 text-center">
+              No {tab} proposals yet.
+            </p>
+          ) : (
+            visible.map((proposal, index) => (
+              <ProposalCard
+                key={proposal.id}
+                proposal={proposal}
+                defaultExpanded={index === 0}
+              />
+            ))
+          )}
+        </div>
+
+        {client && <MyDetailsCard client={client} />}
+      </div>
+
     </div>
   );
 }
