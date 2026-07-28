@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { ClipboardIcon, BoltIcon, LockIcon } from '@/components/icons';
 
-// Left column of the dashboard's proposal request page: the headline,
-// the three selling points, and a sign-in link for returning users.
+// Left column of the home page's proposal request flow: the headline,
+// the three selling points, and a sign-in link for returning clients.
 const HIGHLIGHTS = [
   {
     icon: ClipboardIcon,

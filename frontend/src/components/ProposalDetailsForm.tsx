@@ -4,12 +4,16 @@ import { useState } from 'react';
 import type { ProposalDetails } from '@/types';
 
 // Step 1 of the proposal request flow: the project details form.
-// Owns its own field state and validation; on success it hands the
-// values up to the parent via onNext, which advances to the account step.
+// Owns its own field state and validation; on success it hands the values up
+// to the parent via onSubmit, which submits the proposal (no account required).
 export default function ProposalDetailsForm({
-  onNext,
+  onSubmit,
+  isSubmitting,
+  submitError,
 }: {
-  onNext: (details: ProposalDetails) => void;
+  onSubmit: (details: ProposalDetails) => void;
+  isSubmitting: boolean;
+  submitError: boolean;
 }) {
   // Field values
   const [projectType, setProjectType] = useState('');
@@ -78,7 +82,7 @@ export default function ProposalDetailsForm({
 
     if (hasErrors) return;
 
-    onNext({
+    onSubmit({
       projectType,
       timeline,
       firstName,
@@ -234,12 +238,20 @@ export default function ProposalDetailsForm({
         </div>
       </div>
 
-      {/* Next button */}
+      {/* Submission error */}
+      {submitError && (
+        <p className="text-red-200 text-sm">
+          Something went wrong submitting your proposal. Please try again.
+        </p>
+      )}
+
+      {/* Submit button */}
       <button
         type="submit"
-        className="w-full bg-blue-950 text-white font-semibold py-3 rounded-md mt-2"
+        disabled={isSubmitting}
+        className="w-full bg-blue-950 text-white font-semibold py-3 rounded-md mt-2 disabled:opacity-50"
       >
-        Next
+        {isSubmitting ? 'Submitting...' : 'Submit Proposal'}
       </button>
 
     </form>

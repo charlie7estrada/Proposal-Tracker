@@ -3,10 +3,19 @@
 import Link from 'next/link';
 import { EnvelopeIcon, ChevronRightIcon } from '@/components/icons';
 
-// Confirmation popup shown after the proposal request is submitted.
-// Renders nothing until the parent flips `open` to true, then covers the
-// page with a dimmed overlay and the "Proposal Sent" card.
-export default function ProposalSentModal({ open }: { open: boolean }) {
+// Confirmation popup shown after the proposal is submitted. Renders nothing
+// until the parent flips `open` to true, then covers the page with a dimmed
+// overlay and the "Proposal Sent" card. When the client created an account
+// (`signedIn`), it links to their portal; otherwise it just closes via `onDone`.
+export default function ProposalSentModal({
+  open,
+  signedIn,
+  onDone,
+}: {
+  open: boolean;
+  signedIn: boolean;
+  onDone: () => void;
+}) {
   if (!open) return null;
 
   return (
@@ -29,13 +38,23 @@ export default function ProposalSentModal({ open }: { open: boolean }) {
           Thank you for the opportunity!
         </p>
 
-        {/* Takes the user to the proposals list */}
-        <Link
-          href="/dashboard/proposals"
-          className="inline-flex items-center gap-2 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg"
-        >
-          <ChevronRightIcon className="w-4 h-4" /> VIEW PROPOSAL
-        </Link>
+        {/* With an account, go to the portal; without one, just close */}
+        {signedIn ? (
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg"
+          >
+            <ChevronRightIcon className="w-4 h-4" /> VIEW PROPOSAL
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={onDone}
+            className="inline-flex items-center gap-2 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg"
+          >
+            <ChevronRightIcon className="w-4 h-4" /> DONE
+          </button>
+        )}
       </div>
     </div>
   );

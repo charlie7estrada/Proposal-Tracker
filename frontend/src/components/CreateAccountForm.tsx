@@ -4,15 +4,18 @@ import { useState } from 'react';
 import type { AccountDetails } from '@/types';
 import { UserIcon, EnvelopeIcon } from '@/components/icons';
 
-// Step 2 of the proposal request flow: the "Create Account" card.
-// Owns its own field state and validation; on success it hands the
-// account details up to the parent, which performs the actual submit.
+// Optional step after the proposal is submitted: the "Create Account" card,
+// letting the client make an account to track their proposal. Owns its own
+// field state and validation; on success it hands the account details up to
+// the parent. `onSkip` finishes without creating an account.
 export default function CreateAccountForm({
   onSubmit,
+  onSkip,
   isSubmitting,
   submitError,
 }: {
   onSubmit: (account: AccountDetails) => void;
+  onSkip: () => void;
   isSubmitting: boolean;
   submitError: boolean;
 }) {
@@ -71,10 +74,11 @@ export default function CreateAccountForm({
         <UserIcon className="w-16 h-16 text-blue-900" />
       </div>
 
-      <p className="text-black text-center font-medium mb-6">
-        You&apos;re Almost There
-        <br />
-        One Final Step!
+      <p className="text-black text-center font-medium mb-2">
+        Your proposal has been submitted!
+      </p>
+      <p className="text-black text-center text-sm mb-6">
+        Create an account to track it, or skip for now.
       </p>
 
       <div className="space-y-4">
@@ -136,12 +140,22 @@ export default function CreateAccountForm({
         className="w-full bg-blue-950 text-white font-semibold py-3 rounded-md mt-6 disabled:opacity-50 flex items-center justify-center gap-2"
       >
         {isSubmitting ? (
-          'Submitting...'
+          'Creating account...'
         ) : (
           <>
-            <EnvelopeIcon className="w-4 h-4" /> Submit
+            <EnvelopeIcon className="w-4 h-4" /> Create Account
           </>
         )}
+      </button>
+
+      {/* Finish without an account */}
+      <button
+        type="button"
+        onClick={onSkip}
+        disabled={isSubmitting}
+        className="w-full text-white text-sm underline mt-4 disabled:opacity-50"
+      >
+        Skip for now
       </button>
 
     </form>
