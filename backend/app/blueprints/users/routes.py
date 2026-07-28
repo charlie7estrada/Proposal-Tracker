@@ -4,7 +4,7 @@ from flask import request, jsonify
 from .schemas import user_schema, login_schema, user_create_schema
 from marshmallow import ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.models import Users, db
+from app.models import Submissions, Users, db
 from . import users_bp
 from app.util.auth import encode_token, token_required
 from datetime import datetime, timezone, timedelta
@@ -27,14 +27,29 @@ def register():
             'code': 'EMAIL_EXISTS',
         }), 409
 
-    # Create new user
+    # Public registration is for portal clients only. Never accept a role
+    # from the request — team MEMBER/ADMIN accounts are created manually.
     new_user = Users(
         email=data['email'],
         password_hash=generate_password_hash(data['password']),
-        role='MEMBER' # Default role is MEMBER. Admins should be created manually or through a separate process.
+        role='CLIENT',
+        first_name=data['first_name'],
+        last_name=data['last_name'],
+        phone=data['phone'],
+        company_name=data['company_name'],
     )
 
     db.session.add(new_user)
+    # Flush so the id column default is generated before we use it below
+    db.session.flush()
+
+    # Claim intake submissions sent with this email so they show up on the
+    # client's portal. (Email isn't verified yet — note for when it is.)
+    db.session.query(Submissions).where(
+        Submissions.contact_email == data['email'],
+        Submissions.client_id.is_(None),
+    ).update({'client_id': new_user.id})
+
     db.session.commit()
 
     return jsonify({

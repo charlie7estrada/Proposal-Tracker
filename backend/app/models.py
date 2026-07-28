@@ -31,8 +31,14 @@ class Users(Base):
     id: Mapped[str] = mapped_column(String, primary_key=True, default=_new_uuid)
     email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(300), nullable=False)
-    role: Mapped[str] = mapped_column(String(50), nullable=False, default='MEMBER')
+    role: Mapped[str] = mapped_column(String(50), nullable=False, default='MEMBER')  ## ADMIN, MEMBER (team), CLIENT (portal)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    # Profile shown on the client portal's "My Details" card
+    first_name: Mapped[str] = mapped_column(String(100), nullable=True)
+    last_name: Mapped[str] = mapped_column(String(100), nullable=True)
+    phone: Mapped[str] = mapped_column(String(50), nullable=True)
+    company_name: Mapped[str] = mapped_column(String(200), nullable=True)
 
 
 class Submissions(Base):
@@ -48,9 +54,20 @@ class Submissions(Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default='NEW') ## NEW, CONTACTED, PROPOSAL_SENT, WON, lOST
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
+    # Set once the client creates their portal account; links the submission
+    # to the user who can see it on /api/portal
+    client_id: Mapped[str] = mapped_column(String, ForeignKey('users.id'), nullable=True)
+
     notes: Mapped[list['SubmissionNotes']] = relationship('SubmissionNotes', back_populates='submission')
     proposal: Mapped['Proposals'] = relationship('Proposals', back_populates='submission', uselist=False)
     project: Mapped['Projects'] = relationship('Projects', back_populates='submission', uselist=False)
+    client: Mapped['Users'] = relationship('Users')
+    messages: Mapped[list['ProposalMessages']] = relationship(
+        'ProposalMessages', back_populates='submission', order_by='ProposalMessages.created_at'
+    )
+    files: Mapped[list['ProposalFiles']] = relationship(
+        'ProposalFiles', back_populates='submission', order_by='ProposalFiles.created_at'
+    )
 
 class SubmissionNotes(Base):
     __tablename__ = 'submission_notes'
@@ -78,6 +95,41 @@ class Proposals(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     submission: Mapped['Submissions'] = relationship('Submissions', back_populates='proposal')
+
+
+class ProposalMessages(Base):
+    """Message thread between the client and the team, per submission."""
+    __tablename__ = 'proposal_messages'
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_new_uuid)
+    submission_id: Mapped[str] = mapped_column(String, ForeignKey('submissions.id'), nullable=False)
+    sender_id: Mapped[str] = mapped_column(String, ForeignKey('users.id'), nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    submission: Mapped['Submissions'] = relationship('Submissions', back_populates='messages')
+    sender: Mapped['Users'] = relationship('Users')
+
+
+class ProposalFiles(Base):
+    """A document uploaded to a submission's file manager.
+
+    Content lives on disk under UPLOAD_DIR as `stored_name` (a UUID we
+    generate, never the client's filename); this row holds the metadata.
+    """
+    __tablename__ = 'proposal_files'
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_new_uuid)
+    submission_id: Mapped[str] = mapped_column(String, ForeignKey('submissions.id'), nullable=False)
+    uploader_id: Mapped[str] = mapped_column(String, ForeignKey('users.id'), nullable=False)
+    original_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    stored_name: Mapped[str] = mapped_column(String(300), nullable=False, unique=True)
+    content_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    submission: Mapped['Submissions'] = relationship('Submissions', back_populates='files')
+    uploader: Mapped['Users'] = relationship('Users')
 
 
 class Projects(Base):
