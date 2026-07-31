@@ -8,7 +8,8 @@ Team Members:
     Nicole Cespedes
     Jonathan Hubbard
     Troy Wenzel 
-    Johnna Auman 
+    Thomas Lappas
+    Dhanushka Chandimal 
     Charlie Estrada
     
 Tech Stack: Python + Flask, TypeScript + Next.js
@@ -36,10 +37,9 @@ Proposal-Tracker/
     ├── next.config.ts              Next.js configuration
     ├── tsconfig.json               TypeScript configuration
     ├── package.json                JS dependencies
-    ├── .env.example                Environment variable template (copy to .env.local)
     ├── public/                     Static assets — logo, favicon, brand files
     └── src/
-        ├── middleware.ts           Intercepts requests — enforces auth on protected routes
+        ├── proxy.ts                Intercepts requests — enforces auth on protected routes
         ├── app/                    All pages live here (Next.js App Router)
         │   ├── globals.css         Global styles and Tailwind base imports — edit here for app-wide CSS
         │   ├── layout.tsx          ROOT LAYOUT — wraps every page (global styles, fonts)
@@ -47,7 +47,7 @@ Proposal-Tracker/
         │   ├── login/
         │   │   └── page.tsx        Login page
         │   └── dashboard/          Everything here requires authentication
-        │       ├── layout.tsx      DASHBOARD LAYOUT — adds sidebar/nav to all dashboard pages
+        │       ├── layout.tsx      DASHBOARD LAYOUT — adds top bar/nav to all dashboard pages
         │       ├── page.tsx        Main dashboard — submission list view
         │       ├── proposals/
         │       │   └── page.tsx    Proposals list and management
