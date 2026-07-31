@@ -19,6 +19,12 @@ PORTAL_STATUS = {
 }
 
 
+def _short_date(d) -> str:
+    # M/D/YYYY without leading zeros. strftime's %-m/%-d does this but is a
+    # glibc/BSD extension that raises ValueError on Windows, so build it by hand.
+    return f'{d.month}/{d.day}/{d.year}'
+
+
 class MessageCreateSchema(Schema):
     body = fields.Str(required=True, validate=validate.Length(min=1, max=5000))
 
@@ -41,7 +47,7 @@ def dump_message(message: ProposalMessages) -> dict:
         'id': message.id,
         'from': 'client' if message.sender.role == 'CLIENT' else 'team',
         'text': message.body,
-        'sent': message.created_at.strftime('%-m/%-d/%Y'),
+        'sent': _short_date(message.created_at),
     }
 
 
@@ -57,7 +63,7 @@ def dump_file(file: ProposalFiles) -> dict:
         'name': file.original_name,
         'type': file.original_name.rsplit('.', 1)[-1].upper() if '.' in file.original_name else 'FILE',
         'size': size,
-        'uploaded': file.created_at.strftime('%-m/%-d/%Y'),
+        'uploaded': _short_date(file.created_at),
         'uploadedByClient': file.uploader.role == 'CLIENT',
     }
 
@@ -69,7 +75,7 @@ def dump_proposal(submission: Submissions) -> dict:
         'id': submission.id,
         'title': submission.project.title if submission.project else submission.project_type,
         'status': PORTAL_STATUS.get(submission.status, 'active'),
-        'lastUpdated': last_updated.strftime('%B %-d, %Y'),
+        'lastUpdated': f'{last_updated.strftime("%B")} {last_updated.day}, {last_updated.year}',
         'budget': submission.budget_range,
         'timeline': f'{submission.timeline_weeks} Weeks',
         'projectType': submission.project_type,
